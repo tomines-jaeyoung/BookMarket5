@@ -47,6 +47,22 @@ public class BookController {
         return "books";
     }
 
+    @GetMapping("/add")
+    public String requestAddBookForm(){
+        return "addBook";
+    }
+
+    @PostMapping("/add")
+    public String submitAddNewBook(@ModelAttribute Book book){
+        bookService.setNewBook(book);
+        return "redirect:/books";
+    }
+
+    @ModelAttribute
+    public void addAddtributes(Model model){
+        model.addAttribute("addTitle", "신규 도서 등록");
+    }
+
     @GetMapping("/all")
     public ModelAndView requestAllBooks(){
         ModelAndView modelAndView = new ModelAndView();
