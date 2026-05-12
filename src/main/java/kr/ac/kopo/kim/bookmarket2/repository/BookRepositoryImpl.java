@@ -19,6 +19,7 @@ public class BookRepositoryImpl implements BookRepository{
         book1.setAuthor("송미영");
         book1.setUnitPrice(new BigDecimal(35000));
         book1.setReleaseDate("2024/12/31");
+        book1.setFileName("스프링부트완전정복.png");
 
         Book book2 = new Book();
         book2.setBookId("isbn1002");
@@ -37,6 +38,7 @@ public class BookRepositoryImpl implements BookRepository{
         book2.setCategory("소설/시/희곡");
         book2.setUnitPrice(new BigDecimal(14400));
         book2.setReleaseDate("2004/01/02");
+        book2.setFileName("차라투스트라는이렇게말했다.png");
 
         Book book3 = new Book();
         book3.setBookId("isbn1003");
@@ -51,6 +53,7 @@ public class BookRepositoryImpl implements BookRepository{
         book3.setCategory("철학");
         book3.setUnitPrice(new BigDecimal(17820));
         book3.setReleaseDate("2026/02/25");
+        book3.setFileName("인생을위한최소한의생각.png");
         listOfBooks.add(book1);
         listOfBooks.add(book2);
         listOfBooks.add(book3);
