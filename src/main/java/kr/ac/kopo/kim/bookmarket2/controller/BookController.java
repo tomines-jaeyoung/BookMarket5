@@ -4,12 +4,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kr.ac.kopo.kim.bookmarket2.domain.Book;
 import kr.ac.kopo.kim.bookmarket2.service.BookService;
+import kr.ac.kopo.kim.bookmarket2.validation.BookValidator;
+import kr.ac.kopo.kim.bookmarket2.validation.UnitsInStockValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -28,6 +31,11 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
+    @Autowired
+    private UnitsInStockValidator unitsInStockValidator;
+
+    @Autowired
+    private BookValidator BookValidator;
     @Value("${file.uploadDir}")
     String fileDir;
     @RequestMapping(method = RequestMethod.GET)
@@ -107,6 +115,11 @@ public class BookController {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder){
+        binder.setValidator(BookValidator);
     }
 
     @GetMapping("/all")
