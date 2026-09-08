@@ -2,10 +2,12 @@ package kr.ac.kopo.kim.bookmarket2.repository;
 
 import kr.ac.kopo.kim.bookmarket2.domain.Cart;
 import kr.ac.kopo.kim.bookmarket2.repository.CartRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Repository
 public class CartRepositoryImpl implements CartRepository {
     private Map<String, Cart> listOfCarts;
 
