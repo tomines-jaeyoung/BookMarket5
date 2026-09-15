@@ -37,7 +37,7 @@
                     <th></th>
                 </tr>
                 <form name = "removeForm" id = "addForm" method="post">
-                    <input type = "hidden" name = "_method" value = "delets"/>
+                    <input type = "hidden" name = "_method" value = "delete"/>
                 <div th:if ="${cart !=null}">
                     <div th:each="item:${cart.cartItems}">
                         <tr>
