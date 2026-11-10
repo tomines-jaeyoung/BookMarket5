@@ -1,5 +1,7 @@
 package kr.ac.kopo.kim.bookmarket2.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import kr.ac.kopo.kim.bookmarket2.domain.*;
 import kr.ac.kopo.kim.bookmarket2.service.BookService;
@@ -7,27 +9,25 @@ import kr.ac.kopo.kim.bookmarket2.service.CartService;
 import kr.ac.kopo.kim.bookmarket2.service.OrderProService;
 import kr.ac.kopo.kim.bookmarket2.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
+import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.List;
 
 @Controller
-@RequestMapping("/order")
+@RequestMapping(value = "/order")
 public class OrderController {
-
     @Autowired
     private OrderService orderService;
 
     @Autowired
     private CartService cartService;
-
-    List<Book> listOfBooks;
-
-    Order order;
 
     @Autowired
     private OrderProService orderProService;
@@ -35,15 +35,18 @@ public class OrderController {
     @Autowired
     private BookService bookService;
 
+    List<Book> listOfBooks;
+    Order order;
+
     @GetMapping("/{cartId}")
     public String requestCartList(@PathVariable(value = "cartId") String cartId, Model model){
         Cart cart = cartService.read(cartId);
-
         order = new Order();
         listOfBooks = new ArrayList<Book>();
 
         for(CartItem item : cart.getCartItems().values()){
             OrderItem orderItem = new OrderItem();
+
             Book book = item.getBook();
 
             listOfBooks.add(book);
@@ -54,6 +57,7 @@ public class OrderController {
 
             order.getOrderItems().put(book.getBookId(), orderItem);
         }
+
         order.setCustomer(new Customer());
         order.setShipping(new Shipping());
         order.setGrandTotal(cart.getGrandTotal());
@@ -61,28 +65,23 @@ public class OrderController {
         return "redirect:/order/orderCustomerInfo";
     }
 
-    // 1. 고객 정보 입력 폼 화면 보여주기 (GET)
     @GetMapping("/orderCustomerInfo")
     public String requestCustomerInfoForm(Model model){
         model.addAttribute("customer", order.getCustomer());
         return "orderCustomerInfo";
     }
 
-    // 2. 입력된 고객 정보 제출받기 (POST)
     @PostMapping("/orderCustomerInfo")
-    public String requestCustomerInfo(Customer customer){
+    public String requestCustomerInfo(@ModelAttribute Customer customer){
         order.setCustomer(customer);
         return "redirect:/order/orderShippingInfo";
     }
 
-    // 3. 배송 정보 입력 폼 화면 보여주기 (GET)
     @GetMapping("/orderShippingInfo")
     public String requestShippingInfoForm(Model model){
         model.addAttribute("shipping", order.getShipping());
         return "orderShippingInfo";
     }
-
-    // 4. 배송 정보 제출받기 (POST)
     @PostMapping("/orderShippingInfo")
     public String requestShippingInfo(@Valid @ModelAttribute Shipping shipping, BindingResult bindingResult, Model model){
         if(bindingResult.hasErrors())
@@ -92,19 +91,73 @@ public class OrderController {
         model.addAttribute("order", order);
         return "redirect:/order/orderConfirmation";
     }
-
-    // 5. 주문 확인 영수증 화면 보여주기 (GET)
     @GetMapping("/orderConfirmation")
     public String requestConfirmation(Model model){
-        model.addAttribute("BookList", listOfBooks);
+        model.addAttribute("bookList", listOfBooks);
         model.addAttribute("order", order);
         return "orderConfirmation";
     }
 
-    // 6. 주문 취소 처리 메서드 (canceled 로 통일 완료)
+    @PostMapping("/orderConfirmation")
+    public String requestConfirmationFinished(Model model){
+        model.addAttribute("order", order);
+        orderProService.save(order);
+        return "redirect:/order/orderFinished";
+    }
+
+    @GetMapping("/orderFinished")
+    public String requestOrderFinished(HttpServletRequest request, Model model){
+        orderService.saveOrder(order);
+        model.addAttribute("order", order);
+        HttpSession session = request.getSession();
+
+        if (session != null)
+            session.invalidate();
+
+        return "orderFinished";
+    }
+
     @GetMapping("/orderCanceled")
-    public String requestPermissionCanceled() {
-        order = new Order(); // 주문 정보 초기화
-        return "orderCanceled"; // templates/orderCanceled.html 파일 호출
+    public String requestCanceled(HttpServletRequest request){
+        HttpSession session = request.getSession();
+
+        if (session != null)
+            session.invalidate();
+
+        return "orderCanceled";
+    }
+    @GetMapping("/list")
+    public String viewHomepage(Model model){
+        return viewpage(1, "orderId", "asc", model);
+    }
+    @GetMapping("/page")
+    public String viewpage(@RequestParam("pageNum") int pageNum,@RequestParam("sortField")String sortField,@RequestParam("sortDir")String sortDir, Model model){
+       Page<Order> page = orderProService.listAll(pageNum, sortField, sortDir);
+       List<Order> orderList = page.getContent();
+       model.addAttribute("currentPage", pageNum);
+        model.addAttribute("totalPage", page.getTotalPages());
+        model.addAttribute("totalItems", page.getTotalElements());
+        model.addAttribute("softField", sortField);
+        model.addAttribute("softDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+        model.addAttribute("orderList", orderList);
+
+
+        return "orderList";
+    }
+    @GetMapping("/view/{id}")
+    public ModelAndView viewOrder(@PathVariable(name = "id")Long id){
+        Order order = orderProService.get(id);
+        List<Book> listOfBooks = new ArrayList<Book>();
+        for (OrderItem item : order.getOrderItems().values()){
+            String bookId = item.getBookId();
+            Book book = bookService.getBookById(bookId);
+            listOfBooks.add(book);
+        }
+        ModelAndView modelAndView = new ModelAndView("orderView");
+        modelAndView.addObject("order", order);
+        modelAndView.addObject("bookList", listOfBooks);
+
+        return modelAndView;
     }
 }

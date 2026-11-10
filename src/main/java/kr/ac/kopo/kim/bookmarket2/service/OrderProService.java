@@ -4,6 +4,9 @@ import kr.ac.kopo.kim.bookmarket2.domain.Order;
 import kr.ac.kopo.kim.bookmarket2.repository.OrderProRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,7 +31,10 @@ public class OrderProService {
         orderProRepository.deleteAll();
     }
 
-    public Page<Order> listAll(int pageNum, String sorfField, String sortDir) {
-        return null;
+    public Page<Order> listAll(int pageNum, String sorfField, String sortDir)
+    {
+        int pageSize = 5;
+        Pageable pageable = PageRequest.of(pageNum-1, pageSize, sortDir.equals("asc")? Sort.by(sorfField).ascending() : Sort.by(sorfField).descending());
+        return orderProRepository.findAll(pageable);
     }
 }
